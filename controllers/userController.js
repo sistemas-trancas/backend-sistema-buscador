@@ -1,30 +1,40 @@
+const { esRoleValido, emailExiste, dniExiste, existeUsuarioPorId, existeAreaPorId } = require('../helpers/db-validators');
 const User = require('../models/User');
 const Area = require('../models/Area');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
 
 // Crear usuario
 const addUser = async (req, res) => {
-  const { userId, username, password, role, areaId } = req.body;
+  const { userId, username, email, password, role, areaId, dni } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    await esRoleValido(role);
+    await emailExiste(email);
+    await dniExiste(dni);
+    await existeAreaPorId(areaId);
+
     const requestingUser = await User.findById(userId);
     if (!requestingUser) {
       return res.status(403).json({ message: 'Usuario no encontrado' });
     }
 
     if (requestingUser.role === 'admin' || (requestingUser.role === 'moderator' && role === 'user')) {
-      const area = await Area.findById(areaId);
-      if (!area) {
-        return res.status(400).json({ message: 'Área no válida' });
-      }
-
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = new User({
         username,
+        email,
         password: hashedPassword,
         role,
-        area: area._id,
+        area: areaId,
+        dni,
       });
 
       await newUser.save();
@@ -92,9 +102,9 @@ const getUsers = async (req, res) => {
   }
 };
 
-// Obtener usuario por ID
-const getUserById = async (req, res) => {
-  const { id } = req.params;
+// Obtener usuario por DNI
+const getUserByDni = async (req, res) => {
+  const { dni } = req.params;
   const { userId } = req.body;
 
   try {
@@ -103,7 +113,7 @@ const getUserById = async (req, res) => {
       return res.status(403).json({ message: 'Usuario no encontrado' });
     }
 
-    const user = await User.findById(id).populate('area', 'name');
+    const user = await User.findOne({ dni }).populate('area', 'name');
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
@@ -122,9 +132,15 @@ const getUserById = async (req, res) => {
 // Editar usuario
 const editUser = async (req, res) => {
   const { id } = req.params;
-  const { userId, username, password, role, areaId } = req.body;
+  const { userId, username, email, password, role, areaId, dni } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const requestingUser = await User.findById(userId);
     if (!requestingUser) {
       return res.status(403).json({ message: 'Usuario no encontrado' });
@@ -137,14 +153,22 @@ const editUser = async (req, res) => {
 
     if (requestingUser.role === 'admin' || (requestingUser.role === 'moderator' && userToEdit.role === 'user')) {
       if (username) userToEdit.username = username;
+      if (email) {
+        await emailExiste(email);
+        userToEdit.email = email;
+      }
       if (password) userToEdit.password = await bcrypt.hash(password, 10);
-      if (role) userToEdit.role = role;
+      if (role) {
+        await esRoleValido(role);
+        userToEdit.role = role;
+      }
       if (areaId) {
-        const area = await Area.findById(areaId);
-        if (!area) {
-          return res.status(400).json({ message: 'Área no válida' });
-        }
-        userToEdit.area = area._id;
+        await existeAreaPorId(areaId);
+        userToEdit.area = areaId;
+      }
+      if (dni) {
+        await dniExiste(dni);
+        userToEdit.dni = dni;
       }
 
       await userToEdit.save();
@@ -191,7 +215,7 @@ module.exports = {
   addUser,
   loginUser,
   getUsers,
-  getUserById,
+  getUserByDni,
   editUser,
   deleteUser,
 };

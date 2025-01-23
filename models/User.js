@@ -18,6 +18,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  dni: {
+    type: String,
+    required: true,
+    unique: true,
+  },
 });
 
 module.exports = mongoose.model('User', userSchema);

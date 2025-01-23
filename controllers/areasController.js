@@ -1,11 +1,19 @@
 const Area = require('../models/Area');
 const User = require('../models/User');
+const { validationResult } = require('express-validator');
+const { existeUsuarioPorId, esRoleValido } = require('../helpers/db-validators');
 
 // Crear área
 const addArea = async (req, res) => {
   const { userId, name, moderatorId } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const user = await User.findById(userId);
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ message: 'No tiene permisos para crear áreas' });
@@ -41,6 +49,12 @@ const editArea = async (req, res) => {
   const { userId, name, moderatorId } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const user = await User.findById(userId);
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ message: 'No tiene permisos para editar áreas' });

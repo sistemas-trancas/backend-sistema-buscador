@@ -2,12 +2,20 @@ const File = require('../models/File');
 const User = require('../models/User');
 const Area = require('../models/Area');
 const moment = require('moment-timezone');
+const { validationResult } = require('express-validator');
+const { existeUsuarioPorId, existeAreaPorId } = require('../helpers/db-validators');
 
 // Crear expediente
 const addFile = async (req, res) => {
   const { userId, numeroExpediente, fecha, caja, name, description, categoria } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(403).json({ message: 'Usuario no encontrado' });
@@ -43,6 +51,12 @@ const getFileById = async (req, res) => {
   const { userId } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(403).json({ message: 'Usuario no encontrado' });
@@ -69,6 +83,12 @@ const getFiles = async (req, res) => {
   const { userId } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(403).json({ message: 'Usuario no encontrado' });
@@ -94,6 +114,12 @@ const editFile = async (req, res) => {
   const { userId, numeroExpediente, fecha, caja, name, description } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(403).json({ message: 'Usuario no encontrado' });
@@ -130,6 +156,12 @@ const deleteFile = async (req, res) => {
   const { userId } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(403).json({ message: 'Usuario no encontrado' });
@@ -157,6 +189,12 @@ const searchFilesByNumeroExpediente = async (req, res) => {
   const { userId, numeroExpediente } = req.body;
 
   try {
+    // Validar resultados de express-validator
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(403).json({ message: 'Usuario no encontrado' });
