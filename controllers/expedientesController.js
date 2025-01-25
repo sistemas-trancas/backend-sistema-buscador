@@ -1,13 +1,24 @@
-const File = require('../models/File');
-const User = require('../models/User');
-const Area = require('../models/Area');
-const moment = require('moment-timezone');
-const { validationResult } = require('express-validator');
-const { existeUsuarioPorId, existeAreaPorId } = require('../helpers/db-validators');
+const File = require("../models/File");
+const User = require("../models/usuarios");
+const Area = require("../models/Area");
+const moment = require("moment-timezone");
+const { validationResult } = require("express-validator");
+const {
+  existeUsuarioPorId,
+  existeAreaPorId,
+} = require("../helpers/db-validators");
 
 // Crear expediente
 const addFile = async (req, res) => {
-  const { userId, numeroExpediente, fecha, caja, name, description, categoria } = req.body;
+  const {
+    userId,
+    numeroExpediente,
+    fecha,
+    caja,
+    name,
+    description,
+    categoria,
+  } = req.body;
 
   try {
     // Validar resultados de express-validator
@@ -18,10 +29,13 @@ const addFile = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+      return res.status(403).json({ message: "Usuario no encontrado" });
     }
 
-    if (user.role === 'admin' || (user.role === 'moderator' && user.area.toString() === categoria)) {
+    if (
+      user.role === "admin" ||
+      (user.role === "moderator" && user.area.toString() === categoria)
+    ) {
       const newFile = new File({
         userId,
         numeroExpediente,
@@ -31,17 +45,21 @@ const addFile = async (req, res) => {
         description,
         categoria,
         createdBy: user._id,
-        createdAt: moment().tz('America/Argentina/Buenos_Aires').toDate(),
+        createdAt: moment().tz("America/Argentina/Buenos_Aires").toDate(),
       });
 
       await newFile.save();
       res.status(201).json(newFile);
     } else {
-      res.status(403).json({ message: 'No tiene permisos para crear expedientes en esta área' });
+      res
+        .status(403)
+        .json({
+          message: "No tiene permisos para crear expedientes en esta área",
+        });
     }
   } catch (err) {
-    console.error('Error al agregar expediente:', err);
-    res.status(500).json({ message: 'Error al agregar expediente' });
+    console.error("Error al agregar expediente:", err);
+    res.status(500).json({ message: "Error al agregar expediente" });
   }
 };
 
@@ -59,22 +77,29 @@ const getFileById = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+      return res.status(403).json({ message: "Usuario no encontrado" });
     }
 
-    const file = await File.findById(id).populate('createdBy', 'username').populate('updatedBy', 'username');
+    const file = await File.findById(id)
+      .populate("createdBy", "username")
+      .populate("updatedBy", "username");
     if (!file) {
-      return res.status(404).json({ message: 'Expediente no encontrado' });
+      return res.status(404).json({ message: "Expediente no encontrado" });
     }
 
-    if (user.role === 'admin' || file.categoria.toString() === user.area.toString()) {
+    if (
+      user.role === "admin" ||
+      file.categoria.toString() === user.area.toString()
+    ) {
       res.status(200).json(file);
     } else {
-      res.status(403).json({ message: 'No tiene permisos para ver este expediente' });
+      res
+        .status(403)
+        .json({ message: "No tiene permisos para ver este expediente" });
     }
   } catch (err) {
-    console.error('Error al obtener expediente:', err);
-    res.status(500).json({ message: 'Error al obtener expediente' });
+    console.error("Error al obtener expediente:", err);
+    res.status(500).json({ message: "Error al obtener expediente" });
   }
 };
 
@@ -91,20 +116,24 @@ const getFiles = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+      return res.status(403).json({ message: "Usuario no encontrado" });
     }
 
     let files;
-    if (user.role === 'admin') {
-      files = await File.find().populate('createdBy', 'username').populate('updatedBy', 'username');
+    if (user.role === "admin") {
+      files = await File.find()
+        .populate("createdBy", "username")
+        .populate("updatedBy", "username");
     } else {
-      files = await File.find({ categoria: user.area }).populate('createdBy', 'username').populate('updatedBy', 'username');
+      files = await File.find({ categoria: user.area })
+        .populate("createdBy", "username")
+        .populate("updatedBy", "username");
     }
 
     res.status(200).json(files);
   } catch (err) {
-    console.error('Error al obtener expedientes:', err);
-    res.status(500).json({ message: 'Error al obtener expedientes' });
+    console.error("Error al obtener expedientes:", err);
+    res.status(500).json({ message: "Error al obtener expedientes" });
   }
 };
 
@@ -122,31 +151,37 @@ const editFile = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+      return res.status(403).json({ message: "Usuario no encontrado" });
     }
 
     const file = await File.findById(id);
     if (!file) {
-      return res.status(404).json({ message: 'Expediente no encontrado' });
+      return res.status(404).json({ message: "Expediente no encontrado" });
     }
 
-    if (user.role === 'admin' || (user.role === 'moderator' && file.categoria.toString() === user.area.toString())) {
+    if (
+      user.role === "admin" ||
+      (user.role === "moderator" &&
+        file.categoria.toString() === user.area.toString())
+    ) {
       file.numeroExpediente = numeroExpediente || file.numeroExpediente;
       file.fecha = fecha || file.fecha;
       file.caja = caja || file.caja;
       file.name = name || file.name;
       file.description = description || file.description;
       file.updatedBy = user._id;
-      file.updatedAt = moment().tz('America/Argentina/Buenos_Aires').toDate();
+      file.updatedAt = moment().tz("America/Argentina/Buenos_Aires").toDate();
 
       await file.save();
       res.status(200).json(file);
     } else {
-      res.status(403).json({ message: 'No tiene permisos para editar este expediente' });
+      res
+        .status(403)
+        .json({ message: "No tiene permisos para editar este expediente" });
     }
   } catch (err) {
-    console.error('Error al editar expediente:', err);
-    res.status(500).json({ message: 'Error al editar expediente' });
+    console.error("Error al editar expediente:", err);
+    res.status(500).json({ message: "Error al editar expediente" });
   }
 };
 
@@ -164,23 +199,29 @@ const deleteFile = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+      return res.status(403).json({ message: "Usuario no encontrado" });
     }
 
     const file = await File.findById(id);
     if (!file) {
-      return res.status(404).json({ message: 'Expediente no encontrado' });
+      return res.status(404).json({ message: "Expediente no encontrado" });
     }
 
-    if (user.role === 'admin' || (user.role === 'moderator' && file.categoria.toString() === user.area.toString())) {
+    if (
+      user.role === "admin" ||
+      (user.role === "moderator" &&
+        file.categoria.toString() === user.area.toString())
+    ) {
       await file.remove();
-      res.status(200).json({ message: 'Expediente eliminado correctamente' });
+      res.status(200).json({ message: "Expediente eliminado correctamente" });
     } else {
-      res.status(403).json({ message: 'No tiene permisos para eliminar este expediente' });
+      res
+        .status(403)
+        .json({ message: "No tiene permisos para eliminar este expediente" });
     }
   } catch (err) {
-    console.error('Error al eliminar expediente:', err);
-    res.status(500).json({ message: 'Error al eliminar expediente' });
+    console.error("Error al eliminar expediente:", err);
+    res.status(500).json({ message: "Error al eliminar expediente" });
   }
 };
 
@@ -197,24 +238,30 @@ const searchFilesByNumeroExpediente = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+      return res.status(403).json({ message: "Usuario no encontrado" });
     }
 
     let files;
-    if (user.role === 'admin') {
-      files = await File.find({ numeroExpediente }).populate('createdBy', 'username').populate('updatedBy', 'username');
+    if (user.role === "admin") {
+      files = await File.find({ numeroExpediente })
+        .populate("createdBy", "username")
+        .populate("updatedBy", "username");
     } else {
-      files = await File.find({ numeroExpediente, categoria: user.area }).populate('createdBy', 'username').populate('updatedBy', 'username');
+      files = await File.find({ numeroExpediente, categoria: user.area })
+        .populate("createdBy", "username")
+        .populate("updatedBy", "username");
     }
 
     if (files.length === 0) {
-      return res.status(404).json({ message: 'No se encontraron expedientes con ese número' });
+      return res
+        .status(404)
+        .json({ message: "No se encontraron expedientes con ese número" });
     }
 
     res.status(200).json(files);
   } catch (err) {
-    console.error('Error al buscar expedientes:', err);
-    res.status(500).json({ message: 'Error al buscar expedientes' });
+    console.error("Error al buscar expedientes:", err);
+    res.status(500).json({ message: "Error al buscar expedientes" });
   }
 };
 

@@ -1,9 +1,10 @@
 const { esRoleValido, emailExiste, dniExiste, existeUsuarioPorId, existeAreaPorId } = require('../helpers/db-validators');
-const User = require('../models/User');
+const User = require('../models/usuario');
 const Area = require('../models/Area');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const transporter = require('../config/email');
 
 // Crear usuario
 const addUser = async (req, res) => {
@@ -38,6 +39,23 @@ const addUser = async (req, res) => {
       });
 
       await newUser.save();
+
+      // Enviar correo electrónico al usuario
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Bienvenido a la plataforma',
+        text: `Hola ${username},\n\nTu cuenta ha sido creada exitosamente.\n\nUsuario: ${username}\nContraseña: ${password}\n\nSaludos,\nEquipo de Soporte`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error al enviar el correo:', error);
+        } else {
+          console.log('Correo enviado:', info.response);
+        }
+      });
+
       const { password: _, ...userWithoutPassword } = newUser.toObject();
       res.status(201).json(userWithoutPassword);
     } else {
@@ -51,10 +69,10 @@ const addUser = async (req, res) => {
 
 // Login de usuario
 const loginUser = async (req, res) => {
-  const { username, password } = req.body;
+  const { dni, password } = req.body;
 
   try {
-    const user = await User.findOne({ username }).populate('area', 'name');
+    const user = await User.findOne({ dni }).populate('area', 'name');
     if (!user) {
       return res.status(401).json({ message: 'Credenciales incorrectas' });
     }
@@ -132,7 +150,7 @@ const getUserByDni = async (req, res) => {
 // Editar usuario
 const editUser = async (req, res) => {
   const { id } = req.params;
-  const { userId, username, email, password, role, areaId, dni } = req.body;
+  const { userId, username, password, role, areaId, dni } = req.body;
 
   try {
     // Validar resultados de express-validator
@@ -153,10 +171,6 @@ const editUser = async (req, res) => {
 
     if (requestingUser.role === 'admin' || (requestingUser.role === 'moderator' && userToEdit.role === 'user')) {
       if (username) userToEdit.username = username;
-      if (email) {
-        await emailExiste(email);
-        userToEdit.email = email;
-      }
       if (password) userToEdit.password = await bcrypt.hash(password, 10);
       if (role) {
         await esRoleValido(role);

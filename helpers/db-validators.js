@@ -1,8 +1,8 @@
-const User = require('../models/User');
-const Area = require('../models/Area');
+const User = require("../models/usuario");
+const Area = require("../models/Area");
 
 const esRoleValido = async (role) => {
-  const rolesValidos = ['admin', 'moderator', 'user'];
+  const rolesValidos = ["admin", "moderator", "user"];
   if (!rolesValidos.includes(role)) {
     throw new Error(`El rol ${role} no es válido`);
   }
