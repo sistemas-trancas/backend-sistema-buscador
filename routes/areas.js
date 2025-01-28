@@ -63,8 +63,8 @@ router.put(
   editArea
 );
 
-// Ruta para obtener todas las áreas
-router.get('/', getAreas);
+// Ruta para obtener todas las áreas (solo para usuarios con rol 'admin')
+router.get('/', [validarJWT, validarRole], getAreas);
 
 // Ruta para obtener un área por ID
 router.get('/:id', getAreaById);

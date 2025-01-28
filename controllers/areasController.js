@@ -7,7 +7,6 @@ const {
 } = require("../helpers/db-validators");
 
 // Crear área
-// Crear área
 const addArea = async (req, res) => {
   const { name, moderatorId } = req.body;
   const userId = req.usuario.id; // ID del usuario que crea el área, obtenido del token
@@ -105,14 +104,23 @@ const editArea = async (req, res) => {
 // Obtener todas las áreas
 const getAreas = async (req, res) => {
   try {
-    const areas = await Area.find().populate("moderator", "username");
+    // Verifica si el usuario tiene permisos de administrador
+    const userId = req.usuario.id; // ID del usuario obtenido del token
+    const user = await User.findById(userId);
+
+    // Verificar que el usuario exista y sea administrador
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: 'No tiene permisos para ver las áreas' });
+    }
+
+    // Obtener la lista de todas las áreas
+    const areas = await Area.find(); // Sin 'populate', obtenemos solo las áreas
     res.status(200).json(areas);
   } catch (err) {
-    console.error("Error al obtener áreas:", err);
-    res.status(500).json({ message: "Error al obtener áreas" });
+    console.error('Error al obtener áreas:', err);
+    res.status(500).json({ message: 'Error al obtener áreas' });
   }
 };
-
 // Obtener área por ID
 const getAreaById = async (req, res) => {
   const { id } = req.params;
