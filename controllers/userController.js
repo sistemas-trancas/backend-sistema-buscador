@@ -81,10 +81,20 @@ const addUser = async (req, res) => {
     } else {
       res.status(403).json({ message: 'No tiene permisos para crear este tipo de usuario' });
     }
-  } catch (err) {
-    console.error('Error al crear usuario:', err);
-    res.status(500).json({ message: 'Error al crear usuario' });
-  }
+  } catch (error) {
+    console.error('Error al crear usuario:', error.message);
+
+    // Verifica si es un error de validación
+    if (error.message.includes('del Area no es válido')) {
+        return res.status(400).json({
+            message: error.message // Enviar el mensaje al cliente
+        });
+    }
+
+    // Para cualquier otro error, devuelve un error 500 genérico
+    res.status(500).json({
+        message: 'Error al crear usuario'
+    });}
 };
 
 // Login de usuario

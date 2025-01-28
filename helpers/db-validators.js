@@ -1,5 +1,6 @@
 const User = require("../models/usuario");
 const Area = require("../models/Area");
+const { isValidObjectId } = require('mongoose');
 
 const esRoleValido = async (role) => {
   const rolesValidos = ["admin", "moderator", "user"];
@@ -30,9 +31,13 @@ const existeUsuarioPorId = async (id) => {
 };
 
 const existeAreaPorId = async (id) => {
-  const existeArea = await Area.findById(id);
-  if (!existeArea) {
-    throw new Error(`El área con ID ${id} no existe`);
+  if (!isValidObjectId(id)) {
+      throw new Error(`El ID "${id}" del Area no es válido.`);
+  }
+
+  const area = await Area.findById(id);
+  if (!area) {
+      throw new Error(`El área con el ID "${id}" no existe.`);
   }
 };
 
