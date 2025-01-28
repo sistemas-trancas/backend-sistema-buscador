@@ -151,31 +151,35 @@ const getUsers = async (req, res) => {
 };
 
 // Obtener usuario por DNI
-const getUserByDni = async (req, res) => {
+const { request, response } = require("express");
+const Usuario = require("../models/usuario"); // Suponiendo que el modelo se llama Usuario
+
+// Controlador para obtener un usuario por DNI
+const getUserByDni = async (req = request, res = response) => {
   const { dni } = req.params;
-  const { userId } = req.body;
 
   try {
-    const requestingUser = await User.findById(userId);
-    if (!requestingUser) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+    // Buscamos al usuario sin traer la contraseña
+    const usuario = await Usuario.findOne({ dni }).select('-password'); // Excluimos el campo 'password'
+
+    if (!usuario) {
+      return res.status(404).json({
+        msg: `Usuario con DNI ${dni} no encontrado`,
+      });
     }
 
-    const user = await User.findOne({ dni }).populate('area', 'name');
-    if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
-    }
-
-    if (requestingUser.role === 'admin' || (requestingUser.role === 'moderator' && user.area.equals(requestingUser.area))) {
-      res.status(200).json(user);
-    } else {
-      res.status(403).json({ message: 'No tiene permisos para ver este usuario' });
-    }
-  } catch (err) {
-    console.error('Error al obtener usuario:', err);
-    res.status(500).json({ message: 'Error al obtener usuario' });
+    // Si el usuario existe, respondemos con los datos del usuario (sin la contraseña)
+    return res.json({
+      usuario,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      msg: "Error en el servidor, por favor intente más tarde.",
+    });
   }
 };
+
 
 // Editar usuario
 const editUser = async (req, res) => {
