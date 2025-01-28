@@ -1,14 +1,21 @@
 const mongoose = require('mongoose');
+const { Schema, model } = require('mongoose');
+
 
 const areaSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
   },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'Admin',
+    required: true
+  },
   moderator: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+    ref: 'Moderator',
+    required: false,
   },
 });
 

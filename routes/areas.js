@@ -1,16 +1,28 @@
-const express = require('express');
-const { check } = require('express-validator');
-const { addArea, editArea, getAreas, getAreaById } = require('../controllers/areasController');
-const { existeUsuarioPorId, esRoleValido } = require('../helpers/db-validators');
-const auth = require('../middleware/auth');
-const router = express.Router();
+const { Router } = require("express");
+const { check } = require("express-validator");
+const { validarCampos } = require("../middlewares/validar-campos");
+const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarRole } = require("../middlewares/validar-role");
+const { existeUsuarioPorId } = require("../helpers/db-validators");
+const User = require("../models/usuario");
+
+const {
+  addArea,
+  editArea,
+  getAreas,
+  getAreaById,
+  // Otras funciones...
+} = require("../controllers/areasController");
+
+const router = Router();
 
 // Ruta para crear áreas
 router.post(
-  '/',
+  "/",
   [
-    auth,
-    check('userId').custom(existeUsuarioPorId),
+    validarJWT,
+    validarRole,
+    check('name', 'El nombre del área es obligatorio').notEmpty(),
     check('moderatorId').optional().custom(async (moderatorId) => {
       if (moderatorId) {
         const moderator = await User.findById(moderatorId);
@@ -22,6 +34,7 @@ router.post(
         }
       }
     }),
+    validarCampos,
   ],
   addArea
 );
@@ -30,8 +43,10 @@ router.post(
 router.put(
   '/:id',
   [
-    auth,
-    check('userId').custom(existeUsuarioPorId),
+    validarJWT,
+    validarRole,
+    check('id', 'No es un Id válido').isMongoId(),
+    check('name', 'El nombre del área es obligatorio').notEmpty(),
     check('moderatorId').optional().custom(async (moderatorId) => {
       if (moderatorId) {
         const moderator = await User.findById(moderatorId);
@@ -43,14 +58,15 @@ router.put(
         }
       }
     }),
+    validarCampos,
   ],
   editArea
 );
 
 // Ruta para obtener todas las áreas
-router.get('/', auth, getAreas);
+router.get('/', getAreas);
 
 // Ruta para obtener un área por ID
-router.get('/:id', auth, getAreaById);
+router.get('/:id', getAreaById);
 
 module.exports = router;

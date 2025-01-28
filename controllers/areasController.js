@@ -1,5 +1,5 @@
 const Area = require("../models/Area");
-const User = require("../models/usuarios");
+const User = require("../models/usuario");
 const { validationResult } = require("express-validator");
 const {
   existeUsuarioPorId,
@@ -7,8 +7,10 @@ const {
 } = require("../helpers/db-validators");
 
 // Crear área
+// Crear área
 const addArea = async (req, res) => {
-  const { userId, name, moderatorId } = req.body;
+  const { name, moderatorId } = req.body;
+  const userId = req.usuario.id; // ID del usuario que crea el área, obtenido del token
 
   try {
     // Validar resultados de express-validator
@@ -17,38 +19,36 @@ const addArea = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    // Verificar si el usuario que crea el área es administrador
     const user = await User.findById(userId);
-    if (!user || user.role !== "admin") {
-      return res
-        .status(403)
-        .json({ message: "No tiene permisos para crear áreas" });
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: 'No tiene permisos para crear áreas' });
     }
 
     let moderator = null;
     if (moderatorId) {
       moderator = await User.findById(moderatorId);
       if (!moderator) {
-        return res.status(400).json({ message: "Moderador no encontrado" });
+        return res.status(400).json({ message: 'Moderador no encontrado' });
       }
-      if (moderator.role !== "moderator") {
-        return res
-          .status(400)
-          .json({
-            message: "El usuario proporcionado no tiene el rol de moderador",
-          });
+      await esRoleValido(moderator.role);
+      if (moderator.role !== 'moderator') {
+        return res.status(400).json({ message: 'El usuario proporcionado no tiene el rol de moderador' });
       }
     }
 
     const newArea = new Area({
       name,
+      createdBy: userId,
       moderator: moderator ? moderator._id : null,
     });
 
     await newArea.save();
+
     res.status(201).json(newArea);
   } catch (err) {
-    console.error("Error al crear área:", err);
-    res.status(500).json({ message: "Error al crear área" });
+    console.error('Error al crear área:', err);
+    res.status(500).json({ message: 'Error al crear área' });
   }
 };
 

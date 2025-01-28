@@ -36,8 +36,6 @@ router.post(
     check("role").custom(esRoleValido),
     check("dni", "El DNI es obligatorio").notEmpty(),
     check("dni").custom(dniExiste),
-    check("areaId", "El área es obligatoria").notEmpty(),
-    check("areaId").custom(existeAreaPorId),
     validarCampos,
   ],
   addUser

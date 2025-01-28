@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const Usuario = require('../models/usuario');
 
 const validarJWT = async (req, res, next) => {
-  const token = req.header('Authorization').replace('Bearer ', '');
+  const token = req.header('Authorization');
 
   if (!token) {
     return res.status(401).json({
@@ -11,7 +11,7 @@ const validarJWT = async (req, res, next) => {
   }
 
   try {
-    const { uid } = jwt.verify(token, process.env.SECRETORPRIVATEKEY);
+    const { uid } = jwt.verify(token, process.env.JWT_SECRET);
 
     const usuario = await Usuario.findById(uid);
     if (!usuario) {

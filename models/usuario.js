@@ -16,7 +16,7 @@ const UsuarioSchema = Schema({
   },
   area: {
     type: String,
-    required: true,
+    required: false,
   },
   dni: {
     type: String,
