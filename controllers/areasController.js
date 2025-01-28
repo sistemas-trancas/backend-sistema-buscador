@@ -24,32 +24,42 @@ const addArea = async (req, res) => {
       return res.status(403).json({ message: 'No tiene permisos para crear áreas' });
     }
 
+    // Validar el moderador solo si se pasa un moderadorId
     let moderator = null;
     if (moderatorId) {
       moderator = await User.findById(moderatorId);
       if (!moderator) {
         return res.status(400).json({ message: 'Moderador no encontrado' });
       }
-      await esRoleValido(moderator.role);
+
+      // Verificar que el moderador tenga el rol 'moderator'
       if (moderator.role !== 'moderator') {
         return res.status(400).json({ message: 'El usuario proporcionado no tiene el rol de moderador' });
       }
     }
 
+    // Crear el nuevo área
     const newArea = new Area({
       name,
       createdBy: userId,
-      moderator: moderator ? moderator._id : null,
+      moderator: moderator ? moderator._id : null, // Asignar el ObjectId del moderador
     });
 
+    // Guardar el área
     await newArea.save();
 
-    res.status(201).json(newArea);
+    // Devolver la respuesta con el área creada y el moderador
+    res.status(201).json({
+      _id: newArea._id,
+      name: newArea.name,
+      moderator: moderator ? { _id: moderator._id, username: moderator.username } : null,
+    });
   } catch (err) {
     console.error('Error al crear área:', err);
     res.status(500).json({ message: 'Error al crear área' });
   }
 };
+
 
 // Editar área
 const editArea = async (req, res) => {
@@ -126,10 +136,13 @@ const getAreaById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const area = await Area.findById(id).populate("moderator", "username");
+    const area = await Area.findById(id)
+      .populate("moderator", "username");  // Aquí debes especificar qué campo(s) deseas del moderador
+
     if (!area) {
       return res.status(404).json({ message: "Área no encontrada" });
     }
+
     res.status(200).json(area);
   } catch (err) {
     console.error("Error al obtener área:", err);

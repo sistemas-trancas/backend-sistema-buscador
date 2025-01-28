@@ -66,7 +66,7 @@ router.put(
 // Ruta para obtener todas las áreas (solo para usuarios con rol 'admin')
 router.get('/', [validarJWT, validarRole], getAreas);
 
-// Ruta para obtener un área por ID
-router.get('/:id', getAreaById);
+// Ruta para obtener un área por ID (solo para usuarios con rol 'admin' o 'moderator')
+router.get('/:id', [validarJWT], getAreaById);
 
 module.exports = router;
