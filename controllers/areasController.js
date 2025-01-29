@@ -114,18 +114,27 @@ const editArea = async (req, res) => {
 // Obtener todas las áreas
 const getAreas = async (req, res) => {
   try {
-    // Verifica si el usuario tiene permisos de administrador
-    const userId = req.usuario.id; // ID del usuario obtenido del token
+    const userId = req.usuario.id;
     const user = await User.findById(userId);
 
-    // Verificar que el usuario exista y sea administrador
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ message: 'No tiene permisos para ver las áreas' });
     }
 
-    // Obtener la lista de todas las áreas
-    const areas = await Area.find(); // Sin 'populate', obtenemos solo las áreas
-    res.status(200).json(areas);
+    const areas = await Area.find()
+      .populate({
+        path: 'moderator',
+        select: 'username email dni role',
+        model: 'Usuario'
+      })
+      .populate({
+        path: 'createdBy',
+        select: 'username',
+        model: 'Usuario'
+      })
+      .lean();
+      
+    res.status(200).json({ areas });
   } catch (err) {
     console.error('Error al obtener áreas:', err);
     res.status(500).json({ message: 'Error al obtener áreas' });
