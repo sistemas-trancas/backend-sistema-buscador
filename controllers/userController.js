@@ -1,5 +1,4 @@
 const { esRoleValido, emailExiste, dniExiste, existeUsuarioPorId, existeAreaPorId } = require('../helpers/db-validators');
-const { validateUser } = require('../validators/userValidators');
 const User = require('../models/usuario');
 const Area = require('../models/Area');
 const bcrypt = require('bcrypt');
@@ -113,7 +112,7 @@ const loginUser = async (req, res) => {
 // Obtener todos los usuarios
 const getUsers = async (req, res) => {
   try {
-    const userId = req.usuario.id; // Get ID from token
+    const userId = req.usuario._id; // Get ID from token
     const user = await User.findById(userId);
 
     if (!user) {
