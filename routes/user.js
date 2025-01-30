@@ -56,13 +56,6 @@ router.get(
   ],
   getUserByDni
 );
-//ruta para obtener un usuario por Area
-router.get('/by-area', [
-  validarJWT,
-  validarRole,
-], getUsersByModeratorArea);
-
-
 // Ruta para editar un usuario
 router.put(
   "/:id",

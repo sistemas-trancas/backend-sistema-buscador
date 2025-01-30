@@ -5,6 +5,9 @@ const Area = require('../models/Area');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const { request, response } = require("express");
+const Usuario = require("../models/usuario"); // Suponiendo que el modelo se llama Usuario
+
 
 // Crear usuario
 const addUser = async (req, res) => {
@@ -109,35 +112,42 @@ const loginUser = async (req, res) => {
 
 // Obtener todos los usuarios
 const getUsers = async (req, res) => {
-  const { userId } = req.body;
-
   try {
-    const requestingUser = await User.findById(userId);
-    if (!requestingUser) {
+    const userId = req.usuario.id; // Get ID from token
+    const user = await User.findById(userId);
+
+    if (!user) {
       return res.status(403).json({ message: 'Usuario no encontrado' });
     }
 
     let users;
-    if (requestingUser.role === 'admin') {
-      users = await User.find().populate('area', 'name');
-    } else if (requestingUser.role === 'moderator') {
-      users = await User.find({ area: requestingUser.area }).populate('area', 'name');
+    if (user.role === 'admin') {
+      // If admin, get all users
+      users = await User.find()
+        .select('-password')
+        .populate('area', 'name')
+        .lean();
+    } else if (user.role === 'moderator') {
+      // If moderator, get users from same area
+      users = await User.find({ area: user.area })
+        .select('-password')
+        .populate('area', 'name')
+        .lean();
     } else {
       return res.status(403).json({ message: 'No tiene permisos para ver los usuarios' });
     }
 
-    res.status(200).json(users);
+    res.status(200).json({
+      users,
+      total: users.length
+    });
   } catch (err) {
     console.error('Error al obtener usuarios:', err);
     res.status(500).json({ message: 'Error al obtener usuarios' });
   }
 };
-
 // Obtener usuario por DNI
-const { request, response } = require("express");
-const Usuario = require("../models/usuario"); // Suponiendo que el modelo se llama Usuario
 
-// Controlador para obtener un usuario por DNI
 const getUserByDni = async (req = request, res = response) => {
   const { dni } = req.params;
 
@@ -159,46 +169,6 @@ const getUserByDni = async (req = request, res = response) => {
     console.log(error);
     return res.status(500).json({
       msg: "Error en el servidor, por favor intente más tarde.",
-    });
-  }
-};
-
-// Get users by moderator area
-const getUsersByModeratorArea = async (req, res) => {
-  try {
-    const moderatorId = req.usuario.id; // Get ID from token
-
-    // Find moderator and their area
-    const moderator = await User.findById(moderatorId);
-    if (!moderator || moderator.role !== 'moderator') {
-      return res.status(403).json({ 
-        message: 'No tiene permisos para ver usuarios o no es moderador' 
-      });
-    }
-
-    // Get moderator's area
-    const moderatorArea = moderator.area;
-    if (!moderatorArea) {
-      return res.status(400).json({ 
-        message: 'El moderador no tiene un área asignada' 
-      });
-    }
-
-    // Find all users with same area
-    const users = await User.find({ area: moderatorArea })
-      .select('-password') // Exclude password
-      .populate('area', 'name') // Populate area details
-      .lean(); // Convert to plain object
-
-    res.status(200).json({
-      users,
-      total: users.length
-    });
-
-  } catch (err) {
-    console.error('Error al obtener usuarios por área:', err);
-    res.status(500).json({ 
-      message: 'Error al obtener usuarios por área' 
     });
   }
 };
@@ -287,7 +257,6 @@ module.exports = {
   loginUser,
   getUsers,
   getUserByDni,
-  getUsersByModeratorArea,
   editUser,
   deleteUser,
 };
