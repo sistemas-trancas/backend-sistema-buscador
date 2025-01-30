@@ -17,6 +17,7 @@ const {
   getUserByDni,
   editUser,
   deleteUser,
+  getUsersByModeratorArea
 } = require("../controllers/userController");
 
 const router = Router();
@@ -55,6 +56,12 @@ router.get(
   ],
   getUserByDni
 );
+//ruta para obtener un usuario por Area
+router.get('/by-area', [
+  validarJWT,
+  validarRole,
+], getUsersByModeratorArea);
+
 
 // Ruta para editar un usuario
 router.put(

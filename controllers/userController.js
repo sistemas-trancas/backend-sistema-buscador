@@ -163,6 +163,46 @@ const getUserByDni = async (req = request, res = response) => {
   }
 };
 
+// Get users by moderator area
+const getUsersByModeratorArea = async (req, res) => {
+  try {
+    const moderatorId = req.usuario.id; // Get ID from token
+
+    // Find moderator and their area
+    const moderator = await User.findById(moderatorId);
+    if (!moderator || moderator.role !== 'moderator') {
+      return res.status(403).json({ 
+        message: 'No tiene permisos para ver usuarios o no es moderador' 
+      });
+    }
+
+    // Get moderator's area
+    const moderatorArea = moderator.area;
+    if (!moderatorArea) {
+      return res.status(400).json({ 
+        message: 'El moderador no tiene un área asignada' 
+      });
+    }
+
+    // Find all users with same area
+    const users = await User.find({ area: moderatorArea })
+      .select('-password') // Exclude password
+      .populate('area', 'name') // Populate area details
+      .lean(); // Convert to plain object
+
+    res.status(200).json({
+      users,
+      total: users.length
+    });
+
+  } catch (err) {
+    console.error('Error al obtener usuarios por área:', err);
+    res.status(500).json({ 
+      message: 'Error al obtener usuarios por área' 
+    });
+  }
+};
+
 
 // Editar usuario
 const editUser = async (req, res) => {
@@ -247,6 +287,7 @@ module.exports = {
   loginUser,
   getUsers,
   getUserByDni,
+  getUsersByModeratorArea,
   editUser,
   deleteUser,
 };
