@@ -5,7 +5,6 @@ const Area = require('../models/Area');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
-const transporter = require('../config/email');
 
 // Crear usuario
 const addUser = async (req, res) => {
@@ -58,22 +57,6 @@ const addUser = async (req, res) => {
 
       // Guardar el usuario en la base de datos
       await newUser.save();
-
-      // Enviar correo electrónico al usuario
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Bienvenido a la plataforma',
-        text: `Hola ${username},\n\nTu cuenta ha sido creada exitosamente.\n\nUsuario: ${username}\nContraseña: ${password}\n\nSaludos,\nEquipo de Soporte`,
-      };
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error('Error al enviar el correo:', error);
-        } else {
-          console.log('Correo enviado:', info.response);
-        }
-      });
 
       // Excluir la contraseña de la respuesta
       const { password: _, ...userWithoutPassword } = newUser.toObject();
