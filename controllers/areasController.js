@@ -62,7 +62,7 @@ const addArea = async (req, res) => {
 
 
 // Editar área
-const editArea = async (req, res) => {
+const editArea = async (req, res) => {    
   const { id } = req.params;
   const { userId, name, moderatorId } = req.body;
 
@@ -117,7 +117,7 @@ const getAreas = async (req, res) => {
     const userId = req.usuario.id;
     const user = await User.findById(userId);
 
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== 'admin' && user.role !== 'moderator') {
       return res.status(403).json({ message: 'No tiene permisos para ver las áreas' });
     }
 
