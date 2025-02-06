@@ -159,9 +159,34 @@ const getAreaById = async (req, res) => {
   }
 };
 
+// Eliminar área
+const deleteArea = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.usuario.id;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user || user.role !== "admin") { // Solo los administradores pueden eliminar áreass    
+      return res.status(403).json({ message: "No tiene permisos para eliminar áreas" });
+    }
+
+    const area = await Area.findById(id);
+    if (!area) {
+      return res.status(404).json({ message: "Área no encontrada" });
+    }    
+
+    await Area.findByIdAndDelete(id);
+    res.status(200).json({ message: "Área eliminada correctamente" });
+  } catch (err) {
+    console.error("Error al eliminar área:", err);
+    res.status(500).json({ message: "Error al eliminar área" });
+  }
+};
+
 module.exports = {
   addArea,
   editArea,
   getAreas,
   getAreaById,
+  deleteArea,
 };

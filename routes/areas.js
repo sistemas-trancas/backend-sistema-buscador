@@ -11,7 +11,7 @@ const {
   editArea,
   getAreas,
   getAreaById,
-  // Otras funciones...
+  deleteArea,
 } = require("../controllers/areasController");
 
 const router = Router();
@@ -68,5 +68,8 @@ router.get('/', [validarJWT, validarRole], getAreas);
 
 // Ruta para obtener un área por ID (solo para usuarios con rol 'admin' o 'moderator')
 router.get('/:id', [validarJWT], getAreaById);
+
+// eliminar area
+router.delete('/:id', [validarJWT, validarRole], deleteArea);
 
 module.exports = router;
