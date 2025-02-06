@@ -56,32 +56,22 @@ router.get(
   ],
   getUserByDni
 );
-// Ruta para editar un usuario
+// Ruta para editar usuario
 router.put(
   "/:id",
   [
     validarJWT,
     validarRole,
-    check("id", "No es un Id válido").isMongoId(),
-    check("id").custom(existeUsuarioPorId),
-    check("role").custom(esRoleValido),
-    check("password").optional().isLength({ min: 8 }).withMessage("La contraseña debe tener al menos 8 caracteres"),
-    validarCampos,
+    check("email", "El email no es válido").optional().isEmail(),
+    check("password", "La contraseña debe tener más de 6 caracteres").optional().isLength({ min: 6 }),
+    check("areaId", "El ID del área no es válido").optional().isMongoId(),
+    validarCampos
   ],
   editUser
 );
 
-// Ruta para eliminar un usuario
-router.delete(
-  "/:id",
-  [
-    validarJWT,
-    validarRole,
-    check("id", "No es un Id válido").isMongoId(),
-    check("id").custom(existeUsuarioPorId),
-    validarCampos,
-  ],
-  deleteUser
-);
+// Ruta para eliminar usuario
+router.delete("/:id", [validarJWT, validarRole], deleteUser);
+
 
 module.exports = router;

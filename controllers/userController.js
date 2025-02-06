@@ -6,7 +6,28 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const { request, response } = require("express");
 const Usuario = require("../models/usuario"); // Suponiendo que el modelo se llama Usuario
+const mongoose = require("mongoose");
 
+
+// Middleware para verificar el token
+const verificarToken = (req) => {
+  const token = req.header('Authorization');
+  console.log(token);
+  if (!token) {
+    throw { status: 401, message: 'Token no proporcionado' };
+  }
+
+  try {
+    const token = req.headers.authorization; // Toma el token directamente del encabezado
+    if (!token) {
+        throw { status: 401, message: "Token no proporcionado" };
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded;
+} catch (err) {
+    throw { status: 401, message: "Token inválido" };
+}
+};
 
 // Crear usuario
 const addUser = async (req, res) => {
@@ -172,84 +193,80 @@ const getUserByDni = async (req = request, res = response) => {
   }
 };
 
-
 // Editar usuario
 const editUser = async (req, res) => {
-  const { id } = req.params;
-  const { userId, username, password, role, areaId, dni } = req.body;
+  const { id } = req.params; // ID del usuario a editar
+  const { email, password, area, role } = req.body; // Datos editables
+  const usuarioAutenticado = req.usuario; // Usuario que hace la petición
 
   try {
-    // Validar resultados de express-validator
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    // Verificar si el usuario autenticado es admin o moderador
+    if (usuarioAutenticado.role !== "admin" && usuarioAutenticado.role !== "moderator") {
+      return res.status(403).json({ message: "No tiene permisos para editar usuarios" });
     }
 
-    const requestingUser = await User.findById(userId);
-    if (!requestingUser) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+    // Buscar usuario a editar
+    const usuarioAEditar = await Usuario.findById(id);
+    if (!usuarioAEditar) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const userToEdit = await User.findById(id);
-    if (!userToEdit) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+    // No permitir cambiar username o DNI
+    if (req.body.username || req.body.dni) {
+      return res.status(400).json({ message: "No se pueden modificar username o DNI" });
     }
 
-    if (requestingUser.role === 'admin' || (requestingUser.role === 'moderator' && userToEdit.role === 'user')) {
-      if (username) userToEdit.username = username;
-      if (password) userToEdit.password = await bcrypt.hash(password, 10);
-      if (role) {
-        await esRoleValido(role);
-        userToEdit.role = role;
-      }
-      if (areaId) {
-        await existeAreaPorId(areaId);
-        userToEdit.area = areaId;
-      }
-      if (dni) {
-        await dniExiste(dni);
-        userToEdit.dni = dni;
-      }
-
-      await userToEdit.save();
-      const { password: _, ...userWithoutPassword } = userToEdit.toObject();
-      res.status(200).json(userWithoutPassword);
-    } else {
-      res.status(403).json({ message: 'No tiene permisos para editar este usuario' });
+    // Actualizar solo los campos permitidos
+    if (email) usuarioAEditar.email = email;
+    if (password) usuarioAEditar.password = await bcrypt.hash(password, 10);
+    if (area) usuarioAEditar.area = area;
+    if (role && usuarioAutenticado.role === "admin") {
+      // Solo el admin puede cambiar el role
+      usuarioAEditar.role = role;
     }
-  } catch (err) {
-    console.error('Error al editar usuario:', err);
-    res.status(500).json({ message: 'Error al editar usuario' });
+
+    await usuarioAEditar.save();
+
+    // Crear una copia del usuario sin la contraseña para la respuesta
+    const usuarioRespuesta = { ...usuarioAEditar._doc };
+    delete usuarioRespuesta.password;
+
+    res.status(200).json({ message: "Usuario actualizado correctamente", usuario: usuarioRespuesta });
+  } catch (error) {
+    console.error("Error al editar usuario:", error);
+    res.status(500).json({ message: "Error al editar usuario" });
   }
 };
 
 // Eliminar usuario
 const deleteUser = async (req, res) => {
-  const { id } = req.params;
-  const { userId } = req.body;
+  const { id } = req.params; // ID del usuario a eliminar
+  const usuarioAutenticado = req.usuario; // Usuario que hace la petición
 
   try {
-    const requestingUser = await User.findById(userId);
-    if (!requestingUser) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+    // Verificar si el usuario autenticado es admin o moderador
+    if (usuarioAutenticado.role !== "admin" && usuarioAutenticado.role !== "moderator") {
+      return res.status(403).json({ message: "No tiene permisos para eliminar usuarios" });
     }
 
-    const userToDelete = await User.findById(id);
-    if (!userToDelete) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+    // Buscar usuario a eliminar
+    const usuarioAEliminar = await Usuario.findById(id);
+    if (!usuarioAEliminar) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    if (requestingUser.role === 'admin' || (requestingUser.role === 'moderator' && userToDelete.role === 'user')) {
-      await userToDelete.remove();
-      res.status(200).json({ message: 'Usuario eliminado correctamente' });
-    } else {
-      res.status(403).json({ message: 'No tiene permisos para eliminar este usuario' });
-    }
-  } catch (err) {
-    console.error('Error al eliminar usuario:', err);
-    res.status(500).json({ message: 'Error al eliminar usuario' });
+    // Eliminar el usuario
+    await Usuario.findByIdAndDelete(id);
+
+    // Respuesta solo con el mensaje de confirmación
+    res.status(200).json({ message: "Usuario eliminado correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar usuario:", error);
+    res.status(500).json({ message: "Error al eliminar usuario" });
   }
 };
+
+
 
 module.exports = {
   addUser,
@@ -258,4 +275,5 @@ module.exports = {
   getUserByDni,
   editUser,
   deleteUser,
+
 };
