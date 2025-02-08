@@ -121,7 +121,7 @@ const getAreas = async (req, res) => {
       return res.status(403).json({ message: 'No tiene permisos para ver las áreas' });
     }
 
-    const areas = await Area.find()
+    const areas = await Area.find({ active: true }) // Filtrar por áreas activas
       .populate({
         path: 'moderator',
         select: 'username email dni role',
@@ -133,7 +133,7 @@ const getAreas = async (req, res) => {
         model: 'Usuario'
       })
       .lean();
-      
+
     res.status(200).json({ areas });
   } catch (err) {
     console.error('Error al obtener áreas:', err);
@@ -166,20 +166,22 @@ const deleteArea = async (req, res) => {
 
   try {
     const user = await User.findById(userId);
-    if (!user || user.role !== "admin") { // Solo los administradores pueden eliminar áreass    
+    if (!user || user.role !== "admin") {
       return res.status(403).json({ message: "No tiene permisos para eliminar áreas" });
     }
 
     const area = await Area.findById(id);
     if (!area) {
       return res.status(404).json({ message: "Área no encontrada" });
-    }    
+    }
 
-    await Area.findByIdAndDelete(id);
-    res.status(200).json({ message: "Área eliminada correctamente" });
+    area.active = false; // Marcar el área como inactiva
+    await area.save();
+
+    res.status(200).json({ message: "Área desactivada correctamente" });
   } catch (err) {
-    console.error("Error al eliminar área:", err);
-    res.status(500).json({ message: "Error al eliminar área" });
+    console.error("Error al desactivar área:", err);
+    res.status(500).json({ message: "Error al desactivar área" });
   }
 };
 

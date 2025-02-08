@@ -14,6 +14,10 @@ const AreaSchema = Schema({
     type: Schema.Types.ObjectId,
     ref: 'Usuario',
     required: false
+  },
+  active: {
+    type: Boolean,
+    default: true,
   }
 });
 
