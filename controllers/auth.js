@@ -48,7 +48,15 @@ const obtenerID = (req = request, res = response) => {
   });
 };
 
+const verifyToken = (req = request, res = response) => {
+  // El middleware validarJWT ya hizo el trabajo de verificar el token y obtener el usuario
+  // Si llegamos aquí, significa que el token es válido
+  res.json({ valid: true }); // Envía solo un objeto con la propiedad "valid"
+};
+
+
 module.exports = {
   login,
   obtenerID,
+  verifyToken
 };

@@ -1,7 +1,9 @@
+// routes/auth.js
 const { Router } = require("express");
 const { check } = require("express-validator");
-const { login } = require("../controllers/auth");
+const { login, verifyToken } = require("../controllers/auth"); // Importa verifyToken
 const { validarCampos } = require("../middlewares/validar-campos");
+const { validarJWT } = require("../middlewares/validar-jwt"); // Importa tu middleware validarJWT
 
 const router = Router();
 
@@ -14,5 +16,7 @@ router.post(
   ],
   login
 );
+
+router.get('/verify', validarJWT, verifyToken); // Usa el controlador verifyToken
 
 module.exports = router;
