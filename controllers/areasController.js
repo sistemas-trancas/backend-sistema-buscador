@@ -121,7 +121,7 @@ const getAreas = async (req, res) => {
       return res.status(403).json({ message: 'No tiene permisos para ver las áreas' });
     }
 
-    const areas = await Area.find({ active: true }) // Filtrar por áreas activas
+    const areas = await Area.find({ $or: [{ active: true }, { active: { $exists: false } }] }) // Filtrar por áreas activas
       .populate({
         path: 'moderator',
         select: 'username email dni role',
