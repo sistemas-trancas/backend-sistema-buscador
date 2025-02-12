@@ -160,6 +160,27 @@ const getAreaById = async (req, res) => {
   }
 };
 
+// Obtener áreas por nombre (que contengan la palabra)
+const getAreaByName = async (req, res) => {
+  const { name } = req.params;
+
+  try {
+    // Buscar áreas cuyo nombre contenga la palabra proporcionada (insensible a mayúsculas y minúsculas)
+    const areas = await Area.find({ name: new RegExp(name, "i") }) // "i" es para ignorar mayúsculas y minúsculas
+      .populate("moderator", "username"); // Especifica los campos del moderador que deseas
+
+    if (areas.length === 0) {
+      return res.status(404).json({ message: "No se encontraron áreas que coincidan con ese nombre" });
+    }
+
+    res.status(200).json(areas);
+  } catch (err) {
+    console.error("Error al obtener áreas por nombre:", err);
+    res.status(500).json({ message: "Error al obtener áreas" });
+  }
+};
+
+
 // Eliminar área
 const deleteArea = async (req, res) => {
   const { id } = req.params;
@@ -192,4 +213,5 @@ module.exports = {
   getAreas,
   getAreaById,
   deleteArea,
+  getAreaByName,
 };

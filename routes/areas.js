@@ -12,6 +12,7 @@ const {
   getAreas,
   getAreaById,
   deleteArea,
+  getAreaByName,
 } = require("../controllers/areasController");
 
 const router = Router();
@@ -68,6 +69,9 @@ router.get('/', [validarJWT, validarRole], getAreas);
 
 // Ruta para obtener un área por ID (solo para usuarios con rol 'admin' o 'moderator')
 router.get('/:id', [validarJWT], getAreaById);
+
+// Ruta para obtener un área por nombre (solo para usuarios con rol 'admin' o 'moderator')
+router.get('/name/:name', [validarJWT], getAreaByName);
 
 // eliminar area
 router.delete('/:id', [validarJWT, validarRole], deleteArea);
