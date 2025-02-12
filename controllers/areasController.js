@@ -59,12 +59,10 @@ const addArea = async (req, res) => {
     res.status(500).json({ message: 'Error al crear área' });
   }
 };
-
-
 // Editar área
 const editArea = async (req, res) => {    
   const { id } = req.params;
-  const { userId, name, moderatorId } = req.body;
+  const { userId, name, moderatorId, createdBy } = req.body;  // Agregado 'createdBy'
 
   try {
     // Validar resultados de express-validator
@@ -100,8 +98,10 @@ const editArea = async (req, res) => {
       }
     }
 
+    // Actualización de los campos
     area.name = name || area.name;
     area.moderator = moderator ? moderator._id : area.moderator;
+    area.createdBy = createdBy || area.createdBy;  // Asignación de 'createdBy'
 
     await area.save();
     res.status(200).json(area);
@@ -110,6 +110,7 @@ const editArea = async (req, res) => {
     res.status(500).json({ message: "Error al editar área" });
   }
 };
+
 
 // Obtener todas las áreas
 const getAreas = async (req, res) => {
