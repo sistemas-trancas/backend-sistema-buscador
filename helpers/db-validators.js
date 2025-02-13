@@ -10,18 +10,19 @@ const esRoleValido = async (role) => {
 };
 
 const emailExiste = async (email) => {
-  const existeEmail = await User.findOne({ email });
+  const existeEmail = await User.findOne({ email, active:true }); // Solo verifica usuarios activos 
   if (existeEmail) {
-    throw new Error(`El correo ${email} ya está registrado`);
+    throw new Error(`El correo ${email} ya está registrado y activo`);
   }
 };
 
 const dniExiste = async (dni) => {
-  const existeDni = await User.findOne({ dni });
+  const existeDni = await User.findOne({ dni, active: true }); // Solo verifica usuarios activos
   if (existeDni) {
-    throw new Error(`El DNI ${dni} ya está registrado`);
+    throw new Error(`El DNI ${dni} ya está registrado y activo`);
   }
 };
+
 
 const existeUsuarioPorId = async (id) => {
   const existeUsuario = await User.findById(id);

@@ -165,9 +165,14 @@ const getAreaByName = async (req, res) => {
   const { name } = req.params;
 
   try {
-    // Buscar áreas cuyo nombre contenga la palabra proporcionada (insensible a mayúsculas y minúsculas)
-    const areas = await Area.find({ name: new RegExp(name, "i") }) // "i" es para ignorar mayúsculas y minúsculas
-      .populate("moderator", "username"); // Especifica los campos del moderador que deseas
+    const areas = await Area.find({
+      name: new RegExp(name, "i"),
+      $or: [ // Usamos $or para buscar dos condiciones
+        { active: true }, // Áreas con active: true
+        { active: { $exists: false } } // Áreas sin la propiedad active
+      ]
+    })
+      .populate("moderator", "username");
 
     if (areas.length === 0) {
       return res.status(404).json({ message: "No se encontraron áreas que coincidan con ese nombre" });
