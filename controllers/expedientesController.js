@@ -185,7 +185,6 @@ const editFile = async (req, res) => {
   }
 };
 
-// Eliminar expediente
 const deleteFile = async (req, res) => {
   const { id } = req.params;
   const { userId } = req.body;
@@ -207,23 +206,31 @@ const deleteFile = async (req, res) => {
       return res.status(404).json({ message: "Expediente no encontrado" });
     }
 
+    // Verificar permisos del usuario
     if (
       user.role === "admin" ||
       (user.role === "moderator" &&
         file.categoria.toString() === user.area.toString())
     ) {
-      await file.remove();
-      res.status(200).json({ message: "Expediente eliminado correctamente" });
+      // Si el expediente no tiene el campo "activo", lo inicializamos en true
+      if (file.activo === undefined) {
+        file.activo = true;
+      }
+
+      // Marcar el expediente como inactivo
+      file.activo = false;
+      await file.save();
+
+      res.status(200).json({ message: "Expediente desactivado correctamente" });
     } else {
-      res
-        .status(403)
-        .json({ message: "No tiene permisos para eliminar este expediente" });
+      res.status(403).json({ message: "No tiene permisos para desactivar este expediente" });
     }
   } catch (err) {
-    console.error("Error al eliminar expediente:", err);
-    res.status(500).json({ message: "Error al eliminar expediente" });
+    console.error("Error al desactivar expediente:", err);
+    res.status(500).json({ message: "Error al desactivar expediente" });
   }
 };
+
 
 // Buscar expedientes por número de expediente
 const searchFilesByNumeroExpediente = async (req, res) => {

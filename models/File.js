@@ -47,6 +47,10 @@ const fileSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
   },
+  active: {
+    type: Boolean,
+    default: true,
+  }
 });
 
 module.exports = mongoose.model('File', fileSchema);
