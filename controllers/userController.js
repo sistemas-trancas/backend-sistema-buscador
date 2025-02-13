@@ -216,34 +216,35 @@ const editUser = async (req, res) => {
     res.status(500).json({ message: "Error al editar usuario" });
   }
 };
-
-// Eliminar usuario
 const deleteUser = async (req, res) => {
-  const { id } = req.params; // ID del usuario a eliminar
-  const usuarioAutenticado = req.usuario; // Usuario que hace la petición
+  const { id } = req.params;
+  const usuarioAutenticado = req.usuario;
 
   try {
-    // Verificar si el usuario autenticado es admin o moderador
     if (usuarioAutenticado.role !== "admin" && usuarioAutenticado.role !== "moderator") {
-      return res.status(403).json({ message: "No tiene permisos para eliminar usuarios" });
+      return res.status(403).json({ message: "No tiene permisos para desactivar usuarios" });
     }
 
-    // Buscar usuario a eliminar
     const usuarioAEliminar = await Usuario.findById(id);
     if (!usuarioAEliminar) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    // Eliminar el usuario
-    await Usuario.findByIdAndDelete(id);
+    // Si el campo "activo" no existe, inicializarlo en true
+    if (usuarioAEliminar.active === undefined) {
+      usuarioAEliminar.active = true;
+    }
 
-    // Respuesta solo con el mensaje de confirmación
-    res.status(200).json({ message: "Usuario eliminado correctamente" });
+    usuarioAEliminar.active = false; // Desactivar usuario
+    await usuarioAEliminar.save();
+
+    res.status(200).json({ message: "Usuario desactivado correctamente" });
   } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    res.status(500).json({ message: "Error al eliminar usuario" });
+    console.error("Error al desactivar usuario:", error);
+    res.status(500).json({ message: "Error al desactivar usuario" });
   }
 };
+
 
 
 
