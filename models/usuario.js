@@ -28,6 +28,10 @@ const UsuarioSchema = Schema({
     required: true,
     unique: true,
   },
+  active: {
+    type: Boolean,
+    default: true,
+  }
 });
 
 module.exports = model("Usuario", UsuarioSchema);

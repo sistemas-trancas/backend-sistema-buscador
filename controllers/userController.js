@@ -8,27 +8,6 @@ const { request, response } = require("express");
 const Usuario = require("../models/usuario"); // Suponiendo que el modelo se llama Usuario
 const mongoose = require("mongoose");
 
-
-// Middleware para verificar el token
-const verificarToken = (req) => {
-  const token = req.header('Authorization');
-  console.log(token);
-  if (!token) {
-    throw { status: 401, message: 'Token no proporcionado' };
-  }
-
-  try {
-    const token = req.headers.authorization; // Toma el token directamente del encabezado
-    if (!token) {
-        throw { status: 401, message: "Token no proporcionado" };
-    }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return decoded;
-} catch (err) {
-    throw { status: 401, message: "Token inválido" };
-}
-};
-
 // Crear usuario
 const addUser = async (req, res) => {
   const { userId, username, email, password, role, areaId, dni } = req.body;
