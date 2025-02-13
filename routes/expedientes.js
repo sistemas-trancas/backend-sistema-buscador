@@ -29,31 +29,27 @@ router.post(
 // Ruta para obtener un expediente por ID
 router.get(
   "/:id",
-  [auth, check("userId").custom(existeUsuarioPorId)],
+  [check("userId").custom(existeUsuarioPorId)],
   getFileById
 );
 
 // Ruta para obtener todos los expedientes
-router.get("/", [auth, check("userId").custom(existeUsuarioPorId)], getFiles);
+router.get("/", [check("userId").custom(existeUsuarioPorId)], getFiles);
 
 // Ruta para editar un expediente
 router.put(
   "/:id",
-  [auth, check("userId").custom(existeUsuarioPorId)],
+  [check("userId").custom(existeUsuarioPorId)],
   editFile
 );
 
 // Ruta para eliminar un expediente
-router.delete(
-  "/:id",
-  [auth, check("userId").custom(existeUsuarioPorId)],
-  deleteFile
-);
+router.delete('/:id', [validarJWT, validarRole], deleteFile);
 
 // Ruta para buscar expedientes por número de expediente
 router.post(
   "/search",
-  [auth, check("userId").custom(existeUsuarioPorId)],
+  [check("userId").custom(existeUsuarioPorId)],
   searchFilesByNumeroExpediente
 );
 
