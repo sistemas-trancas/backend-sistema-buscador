@@ -103,28 +103,33 @@ const loginUser = async (req, res) => {
 // Obtener todos los usuarios
 const getUsers = async (req, res) => {
   try {
-    const userId = req.usuario._id; // Get ID from token
+    const userId = req.usuario._id; // ID del usuario autenticado
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+      return res.status(403).json({ message: "Usuario no encontrado" });
     }
 
     let users;
-    if (user.role === 'admin') {
-      // If admin, get all users
-      users = await User.find()
-        .select('-password')
-        .populate('area', 'name')
+    if (user.role === "admin") {
+      // Admin: obtiene todos los usuarios activos o sin el campo active
+      users = await User.find({
+        $or: [{ active: true }, { active: { $exists: false } }]
+      })
+        .select("-password")
+        .populate("area", "name")
         .lean();
-    } else if (user.role === 'moderator') {
-      // If moderator, get users from same area
-      users = await User.find({ area: user.area })
-        .select('-password')
-        .populate('area', 'name')
+    } else if (user.role === "moderator") {
+      // Moderador: obtiene solo usuarios de su área que sean activos
+      users = await User.find({
+        area: user.area,
+        $or: [{ active: true }, { active: { $exists: false } }]
+      })
+        .select("-password")
+        .populate("area", "name")
         .lean();
     } else {
-      return res.status(403).json({ message: 'No tiene permisos para ver los usuarios' });
+      return res.status(403).json({ message: "No tiene permisos para ver los usuarios" });
     }
 
     res.status(200).json({
@@ -132,18 +137,22 @@ const getUsers = async (req, res) => {
       total: users.length
     });
   } catch (err) {
-    console.error('Error al obtener usuarios:', err);
-    res.status(500).json({ message: 'Error al obtener usuarios' });
+    console.error("Error al obtener usuarios:", err);
+    res.status(500).json({ message: "Error al obtener usuarios" });
   }
 };
+
 // Obtener usuario por DNI
 
-const getUserByDni = async (req = request, res = response) => {
+const getUserByDni = async (req, res) => {
   const { dni } = req.params;
 
   try {
-    // Buscamos al usuario sin traer la contraseña
-    const usuario = await Usuario.findOne({ dni }).select('-password'); // Excluimos el campo 'password'
+    // Buscar usuario activo o que no tenga el campo active
+    const usuario = await User.findOne({
+      dni,
+      $or: [{ active: true }, { active: { $exists: false } }]
+    }).select("-password"); // Excluir contraseña
 
     if (!usuario) {
       return res.status(404).json({
@@ -151,17 +160,15 @@ const getUserByDni = async (req = request, res = response) => {
       });
     }
 
-    // Si el usuario existe, respondemos con los datos del usuario (sin la contraseña)
-    return res.json({
-      usuario,
-    });
+    res.json({ usuario });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
+    res.status(500).json({
       msg: "Error en el servidor, por favor intente más tarde.",
     });
   }
 };
+
 
 // Editar usuario
 const editUser = async (req, res) => {
