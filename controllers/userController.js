@@ -18,22 +18,18 @@ const addUser = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Validar que el rol sea válido
-    await esRoleValido(role);
-
-    // Buscar si el email ya existe **y está activo**
+    // 🔹 Buscar solo usuarios activos con el mismo email o DNI
     const emailExistente = await User.findOne({ email, active: true });
     if (emailExistente) {
       return res.status(400).json({ message: "El correo ya está registrado y activo" });
     }
 
-    // Buscar si el DNI ya existe **y está activo**
     const dniExistente = await User.findOne({ dni, active: true });
     if (dniExistente) {
       return res.status(400).json({ message: "El DNI ya está registrado y activo" });
     }
 
-    // Obtener el usuario que está realizando la solicitud
+    // 🔹 Verificar permisos del usuario que crea
     const requestingUser = await User.findById(userId);
     if (!requestingUser) {
       return res.status(403).json({ message: "Usuario no encontrado" });
@@ -57,7 +53,7 @@ const addUser = async (req, res) => {
         role,
         area: areaId,
         dni,
-        active: true, // Asegura que el nuevo usuario se cree activo
+        active: true, // Asegura que el usuario se cree activo
       });
 
       await newUser.save();
@@ -67,7 +63,7 @@ const addUser = async (req, res) => {
       res.status(403).json({ message: "No tiene permisos para crear este tipo de usuario" });
     }
   } catch (error) {
-    console.error("Error al crear usuario:", error.message);
+    console.error("Error al crear usuario:", error);
     res.status(500).json({ message: "Error al crear usuario" });
   }
 };
