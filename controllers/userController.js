@@ -13,7 +13,6 @@ const addUser = async (req, res) => {
   const { userId, username, email, password, role, areaId, dni } = req.body;
 
   try {
-    // Validar resultados de express-validator
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -22,92 +21,88 @@ const addUser = async (req, res) => {
     // Validar que el rol sea válido
     await esRoleValido(role);
 
-    // Validar que el email y el DNI no existan
-    await emailExiste(email);
-    await dniExiste(dni);
+    // Buscar si el email ya existe **y está activo**
+    const emailExistente = await User.findOne({ email, active: true });
+    if (emailExistente) {
+      return res.status(400).json({ message: "El correo ya está registrado y activo" });
+    }
+
+    // Buscar si el DNI ya existe **y está activo**
+    const dniExistente = await User.findOne({ dni, active: true });
+    if (dniExistente) {
+      return res.status(400).json({ message: "El DNI ya está registrado y activo" });
+    }
 
     // Obtener el usuario que está realizando la solicitud
     const requestingUser = await User.findById(userId);
     if (!requestingUser) {
-      return res.status(403).json({ message: 'Usuario no encontrado' });
+      return res.status(403).json({ message: "Usuario no encontrado" });
     }
 
-    // Verificar permisos para crear el usuario
-    if (requestingUser.role === 'admin' || requestingUser.role === 'moderator' ) {
-      // Si el rol es "user", el areaId es obligatorio
-      if (role === 'user' && !areaId) {
-        return res.status(400).json({ message: 'El areaId es obligatorio' });
+    if (requestingUser.role === "admin" || requestingUser.role === "moderator") {
+      if (role === "user" && !areaId) {
+        return res.status(400).json({ message: "El areaId es obligatorio" });
       }
 
-      // Si se proporciona un areaId, validar que exista
       if (areaId) {
         await existeAreaPorId(areaId);
       }
 
-      // Hashear la contraseña
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Crear el nuevo usuario
       const newUser = new User({
         username,
         email,
         password: hashedPassword,
         role,
-        area: areaId, // Si areaId es undefined, no se asignará
+        area: areaId,
         dni,
+        active: true, // Asegura que el nuevo usuario se cree activo
       });
 
-      // Guardar el usuario en la base de datos
       await newUser.save();
-
-      // Excluir la contraseña de la respuesta
       const { password: _, ...userWithoutPassword } = newUser.toObject();
       res.status(201).json(userWithoutPassword);
     } else {
-      res.status(403).json({ message: 'No tiene permisos para crear este tipo de usuario' });
+      res.status(403).json({ message: "No tiene permisos para crear este tipo de usuario" });
     }
   } catch (error) {
-    console.error('Error al crear usuario:', error.message);
-
-    // Verifica si es un error de validación
-    if (error.message.includes('del Area no es válido')) {
-        return res.status(400).json({
-            message: error.message // Enviar el mensaje al cliente
-        });
-    }
-
-    // Para cualquier otro error, devuelve un error 500 genérico
-    res.status(500).json({
-        message: 'Error al crear usuario'
-    });}
+    console.error("Error al crear usuario:", error.message);
+    res.status(500).json({ message: "Error al crear usuario" });
+  }
 };
+
 
 // Login de usuario
 const loginUser = async (req, res) => {
   const { dni, password } = req.body;
 
   try {
-    const user = await User.findOne({ dni }).populate('area', 'name');
+    // Buscar solo usuarios activos o sin la propiedad `active`
+    const user = await User.findOne({
+      dni,
+      $or: [{ active: true }, { active: { $exists: false } }],
+    }).populate("area", "name");
+
     if (!user) {
-      return res.status(401).json({ message: 'Credenciales incorrectas' });
+      return res.status(401).json({ message: "Credenciales incorrectas" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Credenciales incorrectas' });
+      return res.status(401).json({ message: "Credenciales incorrectas" });
     }
 
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '6h' });
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "6h" });
 
-    // Excluir la contraseña de la respuesta
     const { password: _, ...userWithoutPassword } = user.toObject();
-
     res.status(200).json({ token, ...userWithoutPassword });
   } catch (err) {
-    console.error('Error al iniciar sesión:', err);
-    res.status(500).json({ message: 'Error al iniciar sesión' });
+    console.error("Error al iniciar sesión:", err);
+    res.status(500).json({ message: "Error al iniciar sesión" });
   }
 };
+
 
 // Obtener todos los usuarios
 const getUsers = async (req, res) => {
