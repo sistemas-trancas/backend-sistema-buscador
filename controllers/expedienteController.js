@@ -121,50 +121,47 @@ const obtenerExpedientes = async (req, res) => {
 
     let expedientes;
     if (usuarioRol === "admin") {
-      // Si el usuario es admin, puede ver todos los expedientes activos
-      expedientes = await Expediente.find({ active: true }).populate({
-        path: "area",
-        select: "name" // Solo seleccionamos el campo name
-      }).populate("creadoPor", "nombre email");
+      expedientes = await Expediente.find({ active: true })
+        .populate({ path: "area", select: "name" })
+        .populate("creadoPor", "username email")
+        .populate("actualizadoPor", "username"); // Agrega esta línea
     } else if (usuarioRol === "moderator") {
-      // Si el usuario es moderator, solo puede ver los expedientes activos de su área
       expedientes = await Expediente.find({
         area: usuarioArea,
         active: true,
-      }).populate({
-        path: "area",
-        select: "name" // Solo seleccionamos el campo name
-      }).populate("creadoPor", "username dni email area");
+      })
+        .populate({ path: "area", select: "name" })
+        .populate("creadoPor", "username dni email area")
+        .populate("actualizadoPor", "username"); // Agrega esta línea
     } else {
-      // Otros roles no tienen acceso a los expedientes
       return res.status(403).json({ message: "No tienes permisos para ver los expedientes." });
     }
 
-    // Si no se encuentran expedientes, devuelve un mensaje adecuado
     if (!expedientes || expedientes.length === 0) {
       return res.status(404).json({ message: "No se encontraron expedientes activos." });
     }
 
-    // Añadir nombre del área a cada expediente
     const expedientesConNombre = expedientes.map(expediente => {
       return {
         ...expediente.toObject(),
         area: {
           id: expediente.area._id,
-          nombre: expediente.area.name // Accediendo al campo name
-        }
+          nombre: expediente.area.name
+        },
+        editadoPor: expediente.editadoPor ? expediente.editadoPor.username : null // Añadir username del que editó
       };
     });
 
     res.json(expedientesConNombre);
   } catch (error) {
-    console.error(error);  // Esto imprime el error completo en la consola para depuración
+    console.error(error);
     res.status(500).json({
       message: "Error al obtener los expedientes.",
-      error: error.message || error,  // Mostramos el mensaje de error detallado
+      error: error.message || error,
     });
   }
 };
+
 
 
 // Obtener un expediente por búsqueda dinámica
