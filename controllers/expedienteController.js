@@ -162,38 +162,65 @@ const obtenerExpedientes = async (req, res) => {
   }
 };
 
-
-
-// Obtener un expediente por búsqueda dinámica
+// Obtener expedientes por búsqueda dinámica
 const obtenerExpediente = async (req, res) => {
   try {
-    const { titulo, descripcion, caja, numeroExpediente } = req.query;
-    const filtro = { active: true };
+    const usuarioRol = req.usuario.role;
+    const usuarioArea = req.usuario.area;
+    const { titulo, descripcion, caja, numeroExpediente, anio, active } = req.query;
+
+    let filtro = {};
 
     if (titulo) filtro.titulo = new RegExp(titulo, "i");
     if (descripcion) filtro.descripcion = new RegExp(descripcion, "i");
     if (caja) filtro.caja = new RegExp(caja, "i");
     if (numeroExpediente) filtro.numeroExpediente = numeroExpediente;
+    if (anio) filtro.anio = anio;
+    if (active) filtro.active = active;
 
-    // Solo admin o moderator pueden buscar expedientes
-    if (req.usuario.role !== "admin" && req.usuario.role !== "moderator") {
+    let expedientes;
+
+    if (usuarioRol === "admin") {
+      expedientes = await Expediente.find(filtro)
+        .populate({ path: "area", select: "name" })
+        .populate("creadoPor", "username email")
+        .populate("actualizadoPor", "username");
+    } else if (usuarioRol === "moderator") {
+      filtro.area = usuarioArea;
+      expedientes = await Expediente.find(filtro)
+        .populate({ path: "area", select: "name" })
+        .populate("creadoPor", "username dni email area")
+        .populate("actualizadoPor", "username");
+    } else {
       return res
         .status(403)
-        .json({ message: "No tienes permisos para buscar expedientes." });
+        .json({ message: "No tienes permisos para ver los expedientes." });
     }
 
-    const expediente = await Expediente.findOne(filtro).populate(
-      "area creadoPor",
-      "username dni email area"
-    );
-
-    if (!expediente) {
-      return res.status(404).json({ message: "Expediente no encontrado." });
+    if (!expedientes || expedientes.length === 0) {
+      return res.status(404).json({ message: "No se encontraron expedientes." });
     }
 
-    res.json(expediente);
+    const expedientesConNombre = expedientes.map((expediente) => {
+      return {
+        ...expediente.toObject(),
+        area: {
+          id: expediente.area._id,
+          nombre: expediente.area.name,
+        },
+        editadoPor: expediente.actualizadoPor
+          ? expediente.actualizadoPor.username
+          : null,
+      };
+    });
+
+    res.json(expedientesConNombre);
   } catch (error) {
-    res.status(500).json({ message: "Error al obtener el expediente.", error });
+    console.error(error);
+    res.status(500).json({
+      message: "Error al obtener los expedientes.",
+      error: error.message || error,
+    });
   }
 };
 
