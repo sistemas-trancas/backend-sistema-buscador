@@ -1,56 +1,51 @@
 const express = require("express");
-const { check } = require("express-validator");
-const {
-  addFile,
-  getFileById,
-  getFiles,
-  editFile,
-  deleteFile,
-  searchFilesByNumeroExpediente,
-} = require("../controllers/expedientesController");
-const {
-  existeUsuarioPorId,
-  existeAreaPorId,
-} = require("../helpers/db-validators");
-const auth = require("../middlewares/auth");
 const router = express.Router();
+const { 
+    crearExpediente, 
+    editarExpediente,
+    obtenerExpedientes, 
+    obtenerExpediente,
+    obtenerExpedientesPorArea,
+    desactivarExpediente, 
+    recuperarExpediente 
+} = require("../controllers/expedienteController");
+const { validarJWT } = require("../middlewares/validar-jwt");
+const { validarRole } = require("../middlewares/validar-role");
+const { validarCampos } = require("../middlewares/validar-campos");
+const { check } = require("express-validator");
 
-// Ruta para crear expedientes
-router.post(
-  "/",
-  [
-    auth,
-    check("userId").custom(existeUsuarioPorId),
-    check("categoria").custom(existeAreaPorId),
-  ],
-  addFile
-);
+// Crear expediente
+router.post("/", [
+    validarJWT, 
+    validarRole, 
+    check("titulo", "El título es obligatorio").not().isEmpty(),
+    check("numeroExpediente", "El número de expediente es obligatorio").not().isEmpty(),
+    check("caja", "La caja es obligatoria").not().isEmpty(),
+    check("anio", "El año es obligatorio").not().isEmpty(),
+    check("areaId", "El área es obligatoria").not().isEmpty(),
+    validarCampos
+], crearExpediente);
 
-// Ruta para obtener un expediente por ID
-router.get(
-  "/:id",
-  [check("userId").custom(existeUsuarioPorId)],
-  getFileById
-);
+//editar expediente
+// Editar expediente
+router.put("/:id", [
+  validarJWT, 
+  validarRole], editarExpediente);
 
-// Ruta para obtener todos los expedientes
-router.get("/", [check("userId").custom(existeUsuarioPorId)], getFiles);
 
-// Ruta para editar un expediente
-router.put(
-  "/:id",
-  [check("userId").custom(existeUsuarioPorId)],
-  editFile
-);
+// Obtener todos los expedientes activos
+router.get("/", validarJWT, obtenerExpedientes);
 
-// Ruta para eliminar un expediente
-router.delete('/:id', [validarJWT, validarRole], deleteFile);
+// Obtener un expediente por búsqueda dinámica
+router.get("/buscar", validarJWT, obtenerExpediente);
 
-// Ruta para buscar expedientes por número de expediente
-router.post(
-  "/search",
-  [check("userId").custom(existeUsuarioPorId)],
-  searchFilesByNumeroExpediente
-);
+// Obtener expedientes por área
+router.get("/area/:areaId", validarJWT, obtenerExpedientesPorArea);
+
+// Desactivar expediente
+router.put("/desactivar/:id", [validarJWT, validarRole], desactivarExpediente);
+
+// Recuperar expediente
+router.put("/recuperar/:numero", [validarJWT, validarRole], recuperarExpediente);
 
 module.exports = router;

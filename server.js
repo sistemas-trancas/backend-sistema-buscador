@@ -16,7 +16,9 @@ dbConnection();
 // Rutas
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/user'));
-app.use('/api/areas', require('./routes/areas')); // Asegúrate de agregar esta línea
+app.use('/api/areas', require('./routes/areas')); 
+app.use('/api/expedientes', require('./routes/expedientes'));
+
 
 // Iniciar el servidor
 app.listen(port, () => {

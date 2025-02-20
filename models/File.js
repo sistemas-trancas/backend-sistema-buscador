@@ -1,50 +1,45 @@
 const mongoose = require('mongoose');
 
-const fileSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+const expedienteSchema = new mongoose.Schema({
+  titulo: {
+    type: String,
     required: true,
+  },
+  descripcion: {
+    type: String,
+    required: false,
   },
   numeroExpediente: {
     type: String,
     required: true,
   },
-  fecha: {
-    type: Date,
+  anio: {
+    type: Number,
     required: true,
   },
   caja: {
     type: String,
     required: true,
   },
-  name: {
-    type: String,
-    required: true,
-  },
-  description: {
-    type: String,
-    required: true,
-  },
-  categoria: {
+  area: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Area',
     required: true,
   },
-  createdBy: {
+  creadoPor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Usuario',
     required: true,
   },
-  createdAt: {
+  fechaCreacion: {
     type: Date,
     default: Date.now,
   },
-  updatedBy: {
+  actualizadoPor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Usuario',
   },
-  updatedAt: {
+  fechaActualizacion: {
     type: Date,
   },
   active: {
@@ -53,4 +48,4 @@ const fileSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('File', fileSchema);
+module.exports = mongoose.model('Expediente', expedienteSchema);
