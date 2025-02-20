@@ -113,6 +113,7 @@ const editarExpediente = async (req, res) => {
   }
 };
 
+//obtener todos los expedientes
 const obtenerExpedientes = async (req, res) => {
   try {
     const usuarioRol = req.usuario.role;
@@ -121,16 +122,19 @@ const obtenerExpedientes = async (req, res) => {
     let expedientes;
     if (usuarioRol === "admin") {
       // Si el usuario es admin, puede ver todos los expedientes activos
-      expedientes = await Expediente.find({ active: true }).populate(
-        "area creadoPor",
-        "nombre email"
-      );
+      expedientes = await Expediente.find({ active: true }).populate({
+        path: "area",
+        select: "name" // Solo seleccionamos el campo name
+      }).populate("creadoPor", "nombre email");
     } else if (usuarioRol === "moderator") {
       // Si el usuario es moderator, solo puede ver los expedientes activos de su área
       expedientes = await Expediente.find({
         area: usuarioArea,
         active: true,
-      }).populate("area creadoPor", "username dni email area");
+      }).populate({
+        path: "area",
+        select: "name" // Solo seleccionamos el campo name
+      }).populate("creadoPor", "username dni email area");
     } else {
       // Otros roles no tienen acceso a los expedientes
       return res.status(403).json({ message: "No tienes permisos para ver los expedientes." });
@@ -141,7 +145,18 @@ const obtenerExpedientes = async (req, res) => {
       return res.status(404).json({ message: "No se encontraron expedientes activos." });
     }
 
-    res.json(expedientes);
+    // Añadir nombre del área a cada expediente
+    const expedientesConNombre = expedientes.map(expediente => {
+      return {
+        ...expediente.toObject(),
+        area: {
+          id: expediente.area._id,
+          nombre: expediente.area.name // Accediendo al campo name
+        }
+      };
+    });
+
+    res.json(expedientesConNombre);
   } catch (error) {
     console.error(error);  // Esto imprime el error completo en la consola para depuración
     res.status(500).json({
@@ -150,7 +165,6 @@ const obtenerExpedientes = async (req, res) => {
     });
   }
 };
-
 
 
 // Obtener un expediente por búsqueda dinámica
@@ -193,12 +207,10 @@ const obtenerExpedientesPorArea = async (req, res) => {
 
     // Validación de permisos: solo admin o moderator pueden obtener expedientes por área
     if (req.usuario.role !== "admin" && req.usuario.role !== "moderator") {
-      return res
-        .status(403)
-        .json({
-          message:
-            "No tienes permisos para obtener los expedientes de esta área.",
-        });
+      return res.status(403).json({
+        message:
+          "No tienes permisos para obtener los expedientes de esta área.",
+      });
     }
 
     const expedientes = await Expediente.find({
@@ -224,7 +236,9 @@ const desactivarExpediente = async (req, res) => {
     }
 
     if (!expediente.active) {
-      return res.status(400).json({ message: "El expediente ya está desactivado.", expediente });
+      return res
+        .status(400)
+        .json({ message: "El expediente ya está desactivado.", expediente });
     }
 
     expediente.active = false;
@@ -232,14 +246,14 @@ const desactivarExpediente = async (req, res) => {
 
     res.json({
       message: "Expediente desactivado correctamente.",
-      expediente
+      expediente,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error al desactivar el expediente.", error });
+    res
+      .status(500)
+      .json({ message: "Error al desactivar el expediente.", error });
   }
 };
-
-
 
 const recuperarExpediente = async (req, res) => {
   try {
@@ -251,7 +265,9 @@ const recuperarExpediente = async (req, res) => {
     }
 
     if (expediente.active) {
-      return res.status(400).json({ message: "El expediente ya está activo.", expediente });
+      return res
+        .status(400)
+        .json({ message: "El expediente ya está activo.", expediente });
     }
 
     expediente.active = true;
@@ -259,14 +275,14 @@ const recuperarExpediente = async (req, res) => {
 
     res.json({
       message: "Expediente recuperado correctamente.",
-      expediente
+      expediente,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error al recuperar el expediente.", error });
+    res
+      .status(500)
+      .json({ message: "Error al recuperar el expediente.", error });
   }
 };
-
-
 
 module.exports = {
   crearExpediente,
@@ -275,5 +291,5 @@ module.exports = {
   obtenerExpediente,
   obtenerExpedientesPorArea,
   desactivarExpediente,
-  recuperarExpediente, 
+  recuperarExpediente,
 };
