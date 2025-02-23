@@ -5,7 +5,6 @@ const { validarJWT } = require("../middlewares/validar-jwt");
 const { validarRole } = require("../middlewares/validar-role");
 const {
   esRoleValido,
-  emailExiste,
   dniExiste,
   existeUsuarioPorId,
   existeAreaPorId,
@@ -32,8 +31,6 @@ router.post(
     check("password", "La contraseña debe tener más de 6 caracteres").isLength({
       min: 6,
     }),
-    check("email", "El email no es válido").isEmail(),
-    check("email").custom(emailExiste),
     check("role").custom(esRoleValido),
     check("dni", "El DNI es obligatorio").notEmpty(),
     check("dni").custom(dniExiste),
@@ -62,7 +59,6 @@ router.put(
   [
     validarJWT,
     validarRole,
-    check("email", "El email no es válido").optional().isEmail(),
     check("password", "La contraseña debe tener más de 6 caracteres").optional().isLength({ min: 6 }),
     check("areaId", "El ID del área no es válido").optional().isMongoId(),
     validarCampos

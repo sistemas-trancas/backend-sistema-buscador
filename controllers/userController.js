@@ -1,4 +1,4 @@
-const { esRoleValido, emailExiste, dniExiste, existeUsuarioPorId, existeAreaPorId } = require('../helpers/db-validators');
+const { esRoleValido, dniExiste, existeUsuarioPorId, existeAreaPorId } = require('../helpers/db-validators');
 const User = require('../models/usuario');
 const Area = require('../models/Area');
 const bcrypt = require('bcrypt');
@@ -10,18 +10,12 @@ const mongoose = require("mongoose");
 
 // Crear usuario
 const addUser = async (req, res) => {
-  const { userId, username, email, password, role, areaId, dni } = req.body;
+  const { userId, username, password, role, areaId, dni } = req.body;
 
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
-    }
-
-    // 🔹 Buscar solo usuarios activos con el mismo email o DNI
-    const emailExistente = await User.findOne({ email, active: true });
-    if (emailExistente) {
-      return res.status(400).json({ message: "El correo ya está registrado y activo" });
     }
 
     const dniExistente = await User.findOne({ dni, active: true });
@@ -48,7 +42,6 @@ const addUser = async (req, res) => {
 
       const newUser = new User({
         username,
-        email,
         password: hashedPassword,
         role,
         area: areaId,
@@ -173,7 +166,7 @@ const getUserByDni = async (req, res) => {
 // Editar usuario
 const editUser = async (req, res) => {
   const { id } = req.params; // ID del usuario a editar
-  const { email, password, area, role } = req.body; // Datos editables
+  const {password, area, role } = req.body; // Datos editables
   const usuarioAutenticado = req.usuario; // Usuario que hace la petición
 
   try {
@@ -194,7 +187,6 @@ const editUser = async (req, res) => {
     }
 
     // Actualizar solo los campos permitidos
-    if (email) usuarioAEditar.email = email;
     if (password) usuarioAEditar.password = await bcrypt.hash(password, 10);
     if (area) usuarioAEditar.area = area;
     if (role && usuarioAutenticado.role === "admin") {

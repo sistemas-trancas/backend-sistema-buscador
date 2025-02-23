@@ -6,12 +6,10 @@ const UsuarioSchema = new Schema({
   role: { type: String, enum: ["user", "moderator", "admin"], required: true },
   area: { type: String, required: false },
   dni: { type: String, required: true },
-  email: { type: String, required: true },
   active: { type: Boolean, default: true },
 });
 
 // 🔹 Solo evitamos duplicados si el usuario está activo
 UsuarioSchema.index({ dni: 1, active: 1 }, { unique: true });
-UsuarioSchema.index({ email: 1, active: 1 }, { unique: true });
 
 module.exports = model("Usuario", UsuarioSchema);

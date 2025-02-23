@@ -125,7 +125,7 @@ const getAreas = async (req, res) => {
     const areas = await Area.find({ $or: [{ active: true }, { active: { $exists: false } }] }) // Filtrar por áreas activas
       .populate({
         path: 'moderator',
-        select: 'username email dni role',
+        select: 'username dni role',
         model: 'Usuario'
       })
       .populate({

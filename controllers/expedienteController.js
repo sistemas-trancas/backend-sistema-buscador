@@ -122,7 +122,7 @@ const obtenerExpedientes = async (req, res) => {
     if (usuarioRol === "admin") {
       expedientes = await Expediente.find({ active: true })
         .populate({ path: "area", select: "name" })
-        .populate("creadoPor", "username email")
+        .populate("creadoPor", "username")
         .populate("actualizadoPor", "username"); // Agrega esta línea
     } else if (usuarioRol === "moderator") {
       expedientes = await Expediente.find({
@@ -130,7 +130,7 @@ const obtenerExpedientes = async (req, res) => {
         active: true,
       })
         .populate({ path: "area", select: "name" })
-        .populate("creadoPor", "username dni email area")
+        .populate("creadoPor", "username dni area")
         .populate("actualizadoPor", "username"); // Agrega esta línea
     } else {
       return res.status(403).json({ message: "No tienes permisos para ver los expedientes." });
@@ -182,13 +182,13 @@ const obtenerExpediente = async (req, res) => {
     if (usuarioRol === "admin") {
       expedientes = await Expediente.find(filtro)
         .populate({ path: "area", select: "name" })
-        .populate("creadoPor", "username email")
+        .populate("creadoPor", "username")
         .populate("actualizadoPor", "username");
     } else if (usuarioRol === "moderator") {
       filtro.area = usuarioArea;
       expedientes = await Expediente.find(filtro)
         .populate({ path: "area", select: "name" })
-        .populate("creadoPor", "username dni email area")
+        .populate("creadoPor", "username dni area")
         .populate("actualizadoPor", "username");
     } else {
       return res
@@ -239,7 +239,7 @@ const obtenerExpedientesPorArea = async (req, res) => {
     const expedientes = await Expediente.find({
       area: areaId,
       active: true,
-    }).populate("area creadoPor", "username dni email area");
+    }).populate("area creadoPor", "username dni area");
 
     res.json(expedientes);
   } catch (error) {

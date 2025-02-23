@@ -9,13 +9,6 @@ const esRoleValido = async (role) => {
   }
 };
 
-const emailExiste = async (email) => {
-  const existeEmail = await User.findOne({ email, active:true }); // Solo verifica usuarios activos 
-  if (existeEmail) {
-    throw new Error(`El correo ${email} ya está registrado y activo`);
-  }
-};
-
 const dniExiste = async (dni) => {
   const existeDni = await User.findOne({ dni, active: true }); // Solo verifica usuarios activos
   if (existeDni) {
@@ -44,7 +37,6 @@ const existeAreaPorId = async (id) => {
 
 module.exports = {
   esRoleValido,
-  emailExiste,
   dniExiste,
   existeUsuarioPorId,
   existeAreaPorId,

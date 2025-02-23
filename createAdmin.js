@@ -15,7 +15,6 @@ const createAdminUser = async () => {
     const role = "admin";
     const area = "679b1c0cc4c6ec85ca95c3ce";
     const dni = "00000000";
-    const email = "zetadev@zetadev.com";
 
     // Verificar si el usuario administrador ya existe
     const existingAdmin = await User.findOne({ dni });
@@ -32,7 +31,6 @@ const createAdminUser = async () => {
       role,
       area,
       dni,
-      email,
     });
 
     await adminUser.save();
