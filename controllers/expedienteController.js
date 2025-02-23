@@ -24,7 +24,6 @@ const crearExpediente = async (req, res) => {
     // Validaciones adicionales
     if (
       !titulo ||
-      !descripcion ||
       !areaId ||
       !numeroExpediente ||
       !caja ||
@@ -32,7 +31,7 @@ const crearExpediente = async (req, res) => {
     ) {
       return res
         .status(400)
-        .json({ message: "Todos los campos son obligatorios." });
+        .json({ message: "Los campos titulo, areaId, numeroExpediente, caja y año son obligatorios." });
     }
 
     // Verificar si el área existe
