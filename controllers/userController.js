@@ -111,6 +111,7 @@ const getUsers = async (req, res) => {
       })
         .select("-password")
         .populate("area", "name")
+        .sort({ username: 1 })
         .lean();
     } else if (user.role === "moderator") {
       // Moderador: obtiene solo usuarios de su área que sean activos
@@ -166,7 +167,7 @@ const getUserByDni = async (req, res) => {
 // Editar usuario
 const editUser = async (req, res) => {
   const { id } = req.params; // ID del usuario a editar
-  const {password, area, role } = req.body; // Datos editables
+  const { password, area, role } = req.body; // Datos editables
   const usuarioAutenticado = req.usuario; // Usuario que hace la petición
 
   try {
