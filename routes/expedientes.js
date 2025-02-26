@@ -17,7 +17,6 @@ const { check } = require("express-validator");
 // Crear expediente
 router.post("/", [
     validarJWT, 
-    validarRole, 
     check("titulo", "El título es obligatorio").not().isEmpty(),
     check("numeroExpediente", "El número de expediente es obligatorio").not().isEmpty(),
     check("caja", "La caja es obligatoria").not().isEmpty(),
@@ -29,8 +28,7 @@ router.post("/", [
 //editar expediente
 // Editar expediente
 router.put("/:id", [
-  validarJWT, 
-  validarRole], editarExpediente);
+  validarJWT], editarExpediente);
 
 
 // Obtener todos los expedientes activos

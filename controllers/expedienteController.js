@@ -11,7 +11,7 @@ const crearExpediente = async (req, res) => {
     const { id: usuarioId, role: usuarioRol } = req.usuario;
 
     // Verificar si el rol es admin o moderator
-    if (!["admin", "moderator"].includes(usuarioRol)) {
+    if (!["admin", "moderator", "user"].includes(usuarioRol)) {
       return res
         .status(403)
         .json({ message: "No tienes permisos para crear un expediente." });
@@ -124,7 +124,7 @@ const obtenerExpedientes = async (req, res) => {
         .populate({ path: "area", select: "name" })
         .populate("creadoPor", "username")
         .populate("actualizadoPor", "username"); // Agrega esta línea
-    } else if (usuarioRol === "moderator") {
+    } else if (usuarioRol === "moderator" || usuarioRol === "user") {
       expedientes = await Expediente.find({
         area: usuarioArea,
         active: true,
@@ -184,7 +184,7 @@ const obtenerExpediente = async (req, res) => {
         .populate({ path: "area", select: "name" })
         .populate("creadoPor", "username")
         .populate("actualizadoPor", "username");
-    } else if (usuarioRol === "moderator") {
+    } else if (usuarioRol === "moderator" || usuarioRol === "user") {
       filtro.area = usuarioArea;
       expedientes = await Expediente.find(filtro)
         .populate({ path: "area", select: "name" })
@@ -229,7 +229,7 @@ const obtenerExpedientesPorArea = async (req, res) => {
     const { areaId } = req.params;
 
     // Validación de permisos: solo admin o moderator pueden obtener expedientes por área
-    if (req.usuario.role !== "admin" && req.usuario.role !== "moderator") {
+    if (req.usuario.role !== "admin" && req.usuario.role !== "moderator" && req.usuario.role !== "user") {
       return res.status(403).json({
         message:
           "No tienes permisos para obtener los expedientes de esta área.",
